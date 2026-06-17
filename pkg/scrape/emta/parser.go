@@ -9,6 +9,7 @@ import (
 
 	"ninkyclaw/pkg/client"
 	"ninkyclaw/pkg/model"
+
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -99,6 +100,7 @@ func (s *Scraper) Parse(r io.Reader) ([]model.Concert, error) {
 		title := strings.TrimSpace(details.Find("h2").First().Text())
 
 		timeStr := strings.TrimSpace(details.Find("span.time").Text())
+		timeStr = strings.TrimPrefix(timeStr, "kell ")
 		venue := strings.TrimSpace(details.Find("span.cats i").Text())
 
 		// Gather description paragraphs from the desktop '.info' container

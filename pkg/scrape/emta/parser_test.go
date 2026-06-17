@@ -42,7 +42,7 @@ func TestParseCalendar(t *testing.T) {
 		t.Errorf("Expected Date %v, got %v", expectedDate, concert.Date)
 	}
 
-	expectedTime := "kell 10:00"
+	expectedTime := "10:00"
 	if concert.RawTime != expectedTime {
 		t.Errorf("Expected RawTime %q, got %q", expectedTime, concert.RawTime)
 	}

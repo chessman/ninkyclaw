@@ -67,18 +67,17 @@ func main() {
 
 func outputTable(concerts []model.Concert) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, "DATE\tTIME\tVENUE\tTITLE\tTICKET\tRATING\tREAD MORE")
-	fmt.Fprintln(w, "----\t----\t-----\t-----\t------\t------\t---------")
+	fmt.Fprintln(w, "DATE\tRATING\tTIME\tTITLE\tTICKET\tREAD MORE")
+	fmt.Fprintln(w, "----\t------\t----\t-----\t------\t---------")
 
 	for _, c := range concerts {
 		dateStr := c.Date.Format("2006-01-02")
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			dateStr,
+			c.Rating,
 			c.RawTime,
-			c.Venue,
 			c.Title,
 			c.TicketPrice,
-			c.Rating,
 			c.ReadMoreURL,
 		)
 	}
