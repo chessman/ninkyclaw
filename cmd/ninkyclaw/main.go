@@ -16,6 +16,7 @@ import (
 	"ninkyclaw/pkg/scrape/emta"
 	"ninkyclaw/pkg/scrape/filharmoonia"
 	"ninkyclaw/pkg/scrape/muba"
+	"ninkyclaw/pkg/scrape/phillyjoes"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 	yearFlag := flag.Int("year", now.Year(), "Year to scrape calendar for")
 	monthFlag := flag.Int("month", int(now.Month()), "Month to scrape calendar for (1-12)")
 	rulesFlag := flag.String("rules", "", "Path to CSV file containing rating rules (keyword,rating)")
-	sourceFlag := flag.String("source", "all", "Scraper source: 'all', 'emta', 'concert', 'filharmoonia', 'muba', or 'eccm'")
+	sourceFlag := flag.String("source", "all", "Scraper source: 'all', 'emta', 'concert', 'filharmoonia', 'muba', 'eccm', or 'phillyjoes'")
 
 	flag.Parse()
 
@@ -41,9 +42,10 @@ func main() {
 	runFilharmoonia := *sourceFlag == "all" || *sourceFlag == "filharmoonia"
 	runMUBA := *sourceFlag == "all" || *sourceFlag == "muba"
 	runECCM := *sourceFlag == "all" || *sourceFlag == "eccm"
+	runPhillyJoes := *sourceFlag == "all" || *sourceFlag == "phillyjoes"
 
-	if *sourceFlag != "all" && *sourceFlag != "emta" && *sourceFlag != "concert" && *sourceFlag != "filharmoonia" && *sourceFlag != "muba" && *sourceFlag != "eccm" {
-		log.Fatalf("Unknown source: %s. Supported sources: all, emta, concert, filharmoonia, muba, eccm.", *sourceFlag)
+	if *sourceFlag != "all" && *sourceFlag != "emta" && *sourceFlag != "concert" && *sourceFlag != "filharmoonia" && *sourceFlag != "muba" && *sourceFlag != "eccm" && *sourceFlag != "phillyjoes" {
+		log.Fatalf("Unknown source: %s. Supported sources: all, emta, concert, filharmoonia, muba, eccm, phillyjoes.", *sourceFlag)
 	}
 
 	if runEMTA {
@@ -98,6 +100,17 @@ func main() {
 			log.Printf("Error scraping eccm.ee: %v", err)
 		} else {
 			concerts = append(concerts, eccmConcerts...)
+		}
+	}
+
+	if runPhillyJoes {
+		log.Println("Scraping phillyjoes.com...")
+		scraper := phillyjoes.NewScraper()
+		pjConcerts, err := scraper.Scrape(*yearFlag, *monthFlag)
+		if err != nil {
+			log.Printf("Error scraping phillyjoes.com: %v", err)
+		} else {
+			concerts = append(concerts, pjConcerts...)
 		}
 	}
 	log.Printf("Successfully scraped %d concerts.\n", len(concerts))
