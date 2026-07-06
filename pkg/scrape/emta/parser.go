@@ -13,11 +13,13 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-const baseURL = "https://emtasaalid.ee/kalender/"
+const (
+	ajaxURL = "https://emtasaalid.ee/wp-admin/admin-ajax.php"
+)
 
-// CalendarURL builds the EMTA calendar URL for the given year and month.
-func CalendarURL(year, month int) string {
-	return fmt.Sprintf("%s?aasta=%d&kuu=%d", baseURL, year, month)
+// ajaxFormData builds the POST body for the EMTA AJAX calendar endpoint.
+func ajaxFormData(year, month int) string {
+	return fmt.Sprintf("action=myplugin_ajax_load&month=%02d&year=%d", month, year)
 }
 
 // Scraper implements scrape.Scraper for the EMTA calendar.
@@ -32,18 +34,22 @@ func NewScraper() *Scraper {
 	}
 }
 
-// Scrape fetches the calendar page, parses it, fetches all detail pages, and returns the concerts.
+// Scrape fetches events for the given year/month via the AJAX endpoint that the
+// site's JavaScript uses, parses the HTML fragment, then enriches each concert
+// with its extended description from the detail page.
 func (s *Scraper) Scrape(year, month int) ([]model.Concert, error) {
-	url := CalendarURL(year, month)
-	body, err := s.client.Fetch(url)
+	// The static calendar page always returns the current month regardless of URL
+	// params — those are only read client-side by JS. We POST directly to the same
+	// AJAX endpoint the JS calls to get the correct month's event list.
+	body, err := s.client.Post(ajaxURL, ajaxFormData(year, month))
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch calendar page: %w", err)
+		return nil, fmt.Errorf("failed to fetch events via AJAX: %w", err)
 	}
 	defer body.Close()
 
 	concerts, err := s.Parse(body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse calendar page: %w", err)
+		return nil, fmt.Errorf("failed to parse AJAX response: %w", err)
 	}
 
 	for i := range concerts {
@@ -58,7 +64,6 @@ func (s *Scraper) Scrape(year, month int) ([]model.Concert, error) {
 			if err == nil {
 				concerts[i].ExtendedDescription = extDesc
 			}
-			time.Sleep(300 * time.Millisecond) // Polite sleep to prevent spamming
 		}
 	}
 
@@ -74,7 +79,9 @@ func (s *Scraper) Parse(r io.Reader) ([]model.Concert, error) {
 
 	var concerts []model.Concert
 
-	doc.Find(".event-list .event").Each(func(i int, s *goquery.Selection) {
+	// The AJAX endpoint returns bare .event fragments (no .event-list wrapper),
+	// so we match .event directly which also works for the full calendar page.
+	doc.Find(".event").Each(func(i int, s *goquery.Selection) {
 		// Extract persistent ID from class attribute (e.g., "post-18222")
 		var concertID int
 		if classVal, exists := s.Attr("class"); exists {
@@ -168,6 +175,7 @@ func (s *Scraper) Parse(r io.Reader) ([]model.Concert, error) {
 			ImageURL:    imageURL,
 			TicketPrice: ticketPrice,
 			TicketURL:   ticketURL,
+			Source:      "emta",
 		})
 	})
 

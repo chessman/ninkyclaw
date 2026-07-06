@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -38,3 +39,20 @@ func (c *Client) Fetch(url string) (io.ReadCloser, error) {
 
 	return resp.Body, nil
 }
+
+// Post performs an application/x-www-form-urlencoded POST request and returns
+// the response body. The caller is responsible for closing the returned ReadCloser.
+func (c *Client) Post(url, formData string) (io.ReadCloser, error) {
+	resp, err := c.HTTPClient.Post(url, "application/x-www-form-urlencoded", strings.NewReader(formData))
+	if err != nil {
+		return nil, fmt.Errorf("POST %s: %w", url, err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("POST %s: unexpected status %d", url, resp.StatusCode)
+	}
+
+	return resp.Body, nil
+}
+

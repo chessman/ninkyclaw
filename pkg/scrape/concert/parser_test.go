@@ -1,4 +1,4 @@
-package emta
+package concert
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestParseCalendar(t *testing.T) {
-	fixturePath := filepath.Join("..", "..", "..", "testdata", "calendar_fixture.html")
+	fixturePath := filepath.Join("..", "..", "..", "testdata", "concert_calendar_fixture.html")
 	file, err := os.Open(fixturePath)
 	if err != nil {
 		t.Fatalf("Failed to open fixture file: %v", err)
@@ -16,7 +16,7 @@ func TestParseCalendar(t *testing.T) {
 	defer file.Close()
 
 	scraper := NewScraper()
-	concerts, err := scraper.Parse(file)
+	concerts, err := scraper.Parse(file, 2026, 12)
 	if err != nil {
 		t.Fatalf("Failed to parse calendar: %v", err)
 	}
@@ -27,59 +27,54 @@ func TestParseCalendar(t *testing.T) {
 
 	concert := concerts[0]
 
-	expectedID := 18222
+	expectedID := 5366
 	if concert.ID != expectedID {
 		t.Errorf("Expected ID %d, got %d", expectedID, concert.ID)
 	}
 
-	expectedTitle := "Jazz akadeemias. Jazzmuusika eriala avalikud kontserteksamid"
+	expectedTitle := "Haydn. Loomine"
 	if concert.Title != expectedTitle {
 		t.Errorf("Expected Title %q, got %q", expectedTitle, concert.Title)
 	}
 
-	expectedDate := time.Date(2026, 6, 9, 0, 0, 0, 0, time.UTC)
+	expectedDate := time.Date(2026, 12, 19, 0, 0, 0, 0, time.UTC)
 	if !concert.Date.Equal(expectedDate) {
 		t.Errorf("Expected Date %v, got %v", expectedDate, concert.Date)
 	}
 
-	expectedTime := "10:00"
+	expectedTime := "19:00"
 	if concert.RawTime != expectedTime {
 		t.Errorf("Expected RawTime %q, got %q", expectedTime, concert.RawTime)
 	}
 
-	expectedVenue := "Black box"
+	expectedVenue := "Estonia kontserdisaal"
 	if concert.Venue != expectedVenue {
 		t.Errorf("Expected Venue %q, got %q", expectedVenue, concert.Venue)
 	}
 
-	expectedDescription := "Magistriõppe I aasta eksamid:\nFilipp Lepalaan (löökpillid), Jaan Mesi (trompet), Vladimir Todurov (klahvpillid), Ott Ajaots (kitarr)"
-	if concert.Description != expectedDescription {
-		t.Errorf("Expected Description %q, got %q", expectedDescription, concert.Description)
-	}
-
-	expectedReadMoreURL := "https://emtasaalid.ee/uritused/jazz-akadeemias-jazzmuusika-eriala-avalikud-kontserteksamid-6/"
+	expectedReadMoreURL := "https://concert.ee/kontsert/haydn-loomine/?ek_id=5366"
 	if concert.ReadMoreURL != expectedReadMoreURL {
 		t.Errorf("Expected ReadMoreURL %q, got %q", expectedReadMoreURL, concert.ReadMoreURL)
 	}
 
-	expectedImageURL := "https://emtasaalid.ee/wp-content/uploads/2026/04/Koduleht-2-2-1280x830.jpg"
+	expectedImageURL := "https://estonia.concert.ee/wp-content/uploads/2026/04/555x800px_Haydn_Loomine_yld-82x118.jpg"
 	if concert.ImageURL != expectedImageURL {
 		t.Errorf("Expected ImageURL %q, got %q", expectedImageURL, concert.ImageURL)
 	}
 
-	expectedTicketPrice := "Free"
+	expectedTicketPrice := "Paid"
 	if concert.TicketPrice != expectedTicketPrice {
 		t.Errorf("Expected TicketPrice %q, got %q", expectedTicketPrice, concert.TicketPrice)
 	}
 
-	expectedSource := "emta"
+	expectedSource := "concert"
 	if concert.Source != expectedSource {
 		t.Errorf("Expected Source %q, got %q", expectedSource, concert.Source)
 	}
 }
 
 func TestParseDetail(t *testing.T) {
-	fixturePath := filepath.Join("..", "..", "..", "testdata", "detail_fixture.html")
+	fixturePath := filepath.Join("..", "..", "..", "testdata", "concert_detail_fixture.html")
 	file, err := os.Open(fixturePath)
 	if err != nil {
 		t.Fatalf("Failed to open fixture file: %v", err)
@@ -91,7 +86,7 @@ func TestParseDetail(t *testing.T) {
 		t.Fatalf("Failed to parse detail: %v", err)
 	}
 
-	expectedExtDesc := "Ajakava:\n10.00 Filipp Lepalaan (löökpillid)\nAlates Eesti Muusika- ja Teatriakadeemia..."
+	expectedExtDesc := "Kavas:Telemann. Fantaasia nr 5 A-duur\nAugustin Hadelich on üks tänapäeva silmapaistvamaid viiuldajaid."
 	if extDesc != expectedExtDesc {
 		t.Errorf("Expected Extended Description %q, got %q", expectedExtDesc, extDesc)
 	}
