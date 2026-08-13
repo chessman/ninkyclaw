@@ -13,6 +13,7 @@ go run ./cmd/ninkyclaw                                    # current month, all s
 go run ./cmd/ninkyclaw -year 2026 -month 6 -source muba   # one source, one month
 go run ./cmd/ninkyclaw -rules rules.csv                   # apply keyword ratings
 
+gofmt -l .                                                # must print nothing
 go test ./...                                             # all parser tests (offline)
 go test ./pkg/scrape/muba                                 # one package
 go test ./pkg/scrape/emta -run TestParseCalendar -v        # one test

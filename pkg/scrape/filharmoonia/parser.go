@@ -183,17 +183,17 @@ func (s *Scraper) Parse(r io.Reader) ([]model.Concert, error) {
 		}
 
 		concerts = append(concerts, model.Concert{
-			ID:                 concertID,
-			Title:              event.Title,
-			Date:               parsedDate,
-			RawTime:            event.Scheduling.StartTimeFormatted,
-			Venue:              event.Location.Name,
-			Description:        event.Description,
-			ReadMoreURL:        readMoreURL,
-			ImageURL:           event.MainImage.URL,
-			TicketPrice:        ticketPrice,
-			TicketURL:          readMoreURL,
-			Source:             "filharmoonia",
+			ID:          concertID,
+			Title:       event.Title,
+			Date:        parsedDate,
+			RawTime:     event.Scheduling.StartTimeFormatted,
+			Venue:       event.Location.Name,
+			Description: event.Description,
+			ReadMoreURL: readMoreURL,
+			ImageURL:    event.MainImage.URL,
+			TicketPrice: ticketPrice,
+			TicketURL:   readMoreURL,
+			Source:      "filharmoonia",
 		})
 	}
 

@@ -55,4 +55,3 @@ func (c *Client) Post(url, formData string) (io.ReadCloser, error) {
 
 	return resp.Body, nil
 }
-

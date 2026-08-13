@@ -124,7 +124,7 @@ func (s *Scraper) Parse(r io.Reader, year, month int) ([]model.Concert, error) {
 		if commaIdx := strings.Index(dateText, ","); commaIdx != -1 {
 			dateText = strings.TrimSpace(dateText[commaIdx+1:])
 		}
-		
+
 		// Parse date (day and month)
 		var parsedDate time.Time
 		parts := strings.Split(dateText, ".")
