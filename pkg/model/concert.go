@@ -16,5 +16,6 @@ type Concert struct {
 	TicketPrice         string    `json:"ticket_price"` // e.g., "Free", "Paid"
 	TicketURL           string    `json:"ticket_url,omitempty"`
 	Rating              string    `json:"rating,omitempty"`
+	MatchedKeywords     []string  `json:"matched_keywords,omitempty"`
 	Source              string    `json:"source,omitempty"`
 }

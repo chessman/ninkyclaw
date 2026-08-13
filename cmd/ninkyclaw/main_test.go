@@ -1,0 +1,73 @@
+package main
+
+import (
+	"slices"
+	"testing"
+	"time"
+	"unicode/utf8"
+
+	"ninkyclaw/pkg/model"
+)
+
+func TestConcertRows(t *testing.T) {
+	rows := concertRows(model.Concert{
+		Title:           "A title long enough that it has to spill onto a second physical line",
+		Date:            time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
+		RawTime:         "19:00",
+		Source:          "concert",
+		Rating:          "High",
+		MatchedKeywords: []string{"bach"},
+		TicketPrice:     "Paid",
+		ReadMoreURL:     "https://concert.ee/a/very/long/url/that/must/not/be/wrapped",
+	})
+
+	if len(rows) != 2 {
+		t.Fatalf("expected 2 rows, got %d", len(rows))
+	}
+	for i, row := range rows {
+		if len(row) != len(headers) {
+			t.Errorf("row %d has %d cells, want %d", i, len(row), len(headers))
+		}
+	}
+	if rows[0][7] != "https://concert.ee/a/very/long/url/that/must/not/be/wrapped" {
+		t.Errorf("URL was altered: %q", rows[0][7])
+	}
+	// Single-line fields must not repeat on continuation rows.
+	if !slices.Equal(rows[1], []string{"", "", "", "", "", rows[1][5], "", ""}) {
+		t.Errorf("continuation row carries more than a title: %q", rows[1])
+	}
+	if rows[1][5] == "" {
+		t.Error("continuation row has no title text")
+	}
+}
+
+func TestWrap(t *testing.T) {
+	tests := []struct {
+		name  string
+		in    string
+		width int
+		want  []string
+	}{
+		{"empty", "", 10, nil},
+		{"fits", "short title", 20, []string{"short title"}},
+		{"wraps on spaces", "one two three four", 9, []string{"one two", "three", "four"}},
+		{"hard-splits a long word", "aaaaaaaaaa", 4, []string{"aaaa", "aaaa", "aa"}},
+		{"flushes pending line before a long word", "hi aaaaaa", 4, []string{"hi", "aaaa", "aa"}},
+		{"counts runes not bytes", "õöä ühe", 3, []string{"õöä", "ühe"}},
+		{"collapses whitespace", "  a \n b  ", 10, []string{"a b"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := wrap(tt.in, tt.width)
+			if !slices.Equal(got, tt.want) {
+				t.Fatalf("wrap(%q, %d) = %q, want %q", tt.in, tt.width, got, tt.want)
+			}
+			for _, line := range got {
+				if utf8.RuneCountInString(line) > tt.width {
+					t.Errorf("line %q exceeds width %d", line, tt.width)
+				}
+			}
+		})
+	}
+}

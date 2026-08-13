@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"sort"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -123,12 +124,13 @@ func main() {
 		}
 
 		for i := range concerts {
-			r, err := rater.Rate(concerts[i])
+			r, matched, err := rater.Rate(concerts[i])
 			if err != nil {
 				log.Printf("Warning: failed to rate concert %q: %v", concerts[i].Title, err)
 				continue
 			}
 			concerts[i].Rating = r.String()
+			concerts[i].MatchedKeywords = matched
 		}
 	} else {
 		// If no rules CSV is loaded, set rating to Very Low so they sort consistently
@@ -151,22 +153,106 @@ func main() {
 	outputTable(concerts)
 }
 
+// headers doubles as the column count: every emitted line has len(headers) cells.
+var headers = []string{"DATE", "TIME", "SOURCE", "RATING", "KEYWORDS", "TITLE", "TICKET", "READ MORE"}
+
+// Column widths for the free-text columns. Everything else is short and fixed.
+const (
+	titleWidth   = 44
+	keywordWidth = 18
+)
+
+// wrap word-wraps s into lines of at most width runes. Words longer than width
+// are hard-split. Returns nil for empty input.
+func wrap(s string, width int) []string {
+	if width < 1 {
+		width = 1
+	}
+
+	var lines []string
+	var line []rune
+
+	for _, word := range strings.Fields(s) {
+		w := []rune(word)
+
+		for len(w) > width {
+			if len(line) > 0 {
+				lines = append(lines, string(line))
+				line = nil
+			}
+			lines = append(lines, string(w[:width]))
+			w = w[width:]
+		}
+
+		switch {
+		case len(line) == 0:
+			line = w
+		case len(line)+1+len(w) > width:
+			lines = append(lines, string(line))
+			line = w
+		default:
+			line = append(append(line, ' '), w...)
+		}
+	}
+
+	if len(line) > 0 {
+		lines = append(lines, string(line))
+	}
+
+	return lines
+}
+
+// at returns lines[i], or "" past the end, so columns of differing heights can
+// be zipped into rows.
+func at(lines []string, i int) string {
+	if i < len(lines) {
+		return lines[i]
+	}
+	return ""
+}
+
 func outputTable(concerts []model.Concert) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.TabIndent)
-	fmt.Fprintln(w, "DATE\tTIME\tSOURCE\tRATING\tTITLE\tTICKET\tREAD MORE")
-	fmt.Fprintln(w, "----\t----\t------\t------\t-----\t------\t---------")
+	// No TabIndent: it collapses the leading empty cells of continuation lines
+	// into an indent instead of padding them to the column width.
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+
+	rules := make([]string, len(headers))
+	for i, h := range headers {
+		rules[i] = strings.Repeat("-", len(h))
+	}
+	fmt.Fprintln(w, strings.Join(headers, "\t"))
+	fmt.Fprintln(w, strings.Join(rules, "\t"))
 
 	for _, c := range concerts {
-		dateStr := c.Date.Format("2006-01-02")
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			dateStr,
-			c.RawTime,
-			c.Source,
-			c.Rating,
-			c.Title,
-			c.TicketPrice,
-			c.ReadMoreURL,
-		)
+		for _, row := range concertRows(c) {
+			fmt.Fprintln(w, strings.Join(row, "\t"))
+		}
 	}
 	w.Flush()
+}
+
+// concertRows renders one concert as the physical lines it occupies: the wrapped
+// title and keywords spill onto continuation lines, the single-line fields stay
+// on the first. Every row has len(headers) cells — a short row would end
+// tabwriter's column block and the columns after it would stop lining up.
+func concertRows(c model.Concert) [][]string {
+	title := wrap(c.Title, titleWidth)
+	keywords := wrap(strings.Join(c.MatchedKeywords, ", "), keywordWidth)
+
+	rows := make([][]string, max(len(title), len(keywords), 1))
+	for i := range rows {
+		rows[i] = make([]string, len(headers))
+		rows[i][4], rows[i][5] = at(keywords, i), at(title, i)
+	}
+
+	// The URL is deliberately never wrapped: that would break terminal link
+	// detection and copy/paste.
+	rows[0][0] = c.Date.Format("2006-01-02")
+	rows[0][1] = c.RawTime
+	rows[0][2] = c.Source
+	rows[0][3] = c.Rating
+	rows[0][6] = c.TicketPrice
+	rows[0][7] = c.ReadMoreURL
+
+	return rows
 }

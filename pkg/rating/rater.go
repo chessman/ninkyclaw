@@ -3,6 +3,7 @@ package rating
 import (
 	"encoding/csv"
 	"os"
+	"sort"
 	"strings"
 
 	"ninkyclaw/pkg/model"
@@ -43,8 +44,9 @@ func parseRating(s string) Rating {
 }
 
 // Rater defines a common interface for evaluating and rating concerts.
+// Rate returns the rating plus the keywords that matched, sorted.
 type Rater interface {
-	Rate(c model.Concert) (Rating, error)
+	Rate(c model.Concert) (Rating, []string, error)
 }
 
 // priorityMap maps rating enum to numeric priority for comparison.
@@ -104,17 +106,20 @@ func NewKeywordRaterFromCSVFile(filePath string) (*KeywordRater, error) {
 }
 
 // Rate evaluates the concert's description and extended description for keywords.
-// Returns the highest rating matched, or VeryLow if no keywords match.
-func (kr *KeywordRater) Rate(c model.Concert) (Rating, error) {
+// Returns the highest rating matched (VeryLow if none) and every keyword that
+// matched, sorted so output is stable across runs.
+func (kr *KeywordRater) Rate(c model.Concert) (Rating, []string, error) {
 	descLower := strings.ToLower(c.Description)
 	extDescLower := strings.ToLower(c.ExtendedDescription)
 
 	highestRating := VeryLow
 	highestPriority := priorityMap[VeryLow]
+	var matched []string
 
 	for kw, rate := range kr.keywords {
 		kwLower := strings.ToLower(kw)
 		if strings.Contains(descLower, kwLower) || strings.Contains(extDescLower, kwLower) {
+			matched = append(matched, kw)
 			prio := priorityMap[rate]
 			if prio > highestPriority {
 				highestPriority = prio
@@ -123,5 +128,7 @@ func (kr *KeywordRater) Rate(c model.Concert) (Rating, error) {
 		}
 	}
 
-	return highestRating, nil
+	sort.Strings(matched)
+
+	return highestRating, matched, nil
 }
