@@ -158,8 +158,8 @@ var headers = []string{"DATE", "TIME", "SOURCE", "RATING", "KEYWORDS", "TITLE", 
 
 // Column widths for the free-text columns. Everything else is short and fixed.
 const (
-	titleWidth   = 44
-	keywordWidth = 18
+	titleWidth   = 80
+	keywordWidth = 40
 )
 
 // wrap word-wraps s into lines of at most width runes. Words longer than width
@@ -245,14 +245,23 @@ func concertRows(c model.Concert) [][]string {
 		rows[i][4], rows[i][5] = at(keywords, i), at(title, i)
 	}
 
-	// The URL is deliberately never wrapped: that would break terminal link
-	// detection and copy/paste.
 	rows[0][0] = c.Date.Format("2006-01-02")
 	rows[0][1] = c.RawTime
 	rows[0][2] = c.Source
 	rows[0][3] = c.Rating
 	rows[0][6] = c.TicketPrice
-	rows[0][7] = c.ReadMoreURL
+	rows[0][7] = osc8(c.ReadMoreURL, "Link")
 
 	return rows
+}
+
+// osc8 wraps text in an OSC 8 hyperlink escape so the terminal holds the full
+// URL behind short display text. Terminals without OSC 8 support just print the
+// text. It stays in the last column, whose width tabwriter never measures — the
+// escape bytes would otherwise inflate the computed column width.
+func osc8(url, text string) string {
+	if url == "" {
+		return ""
+	}
+	return "\x1b]8;;" + url + "\x1b\\" + text + "\x1b]8;;\x1b\\"
 }

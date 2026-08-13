@@ -2,6 +2,7 @@ package main
 
 import (
 	"slices"
+	"strings"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -11,7 +12,8 @@ import (
 
 func TestConcertRows(t *testing.T) {
 	rows := concertRows(model.Concert{
-		Title:           "A title long enough that it has to spill onto a second physical line",
+		// Derived from titleWidth so it keeps spilling if the column is widened.
+		Title:           strings.Repeat("spill ", titleWidth),
 		Date:            time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
 		RawTime:         "19:00",
 		Source:          "concert",
@@ -21,16 +23,20 @@ func TestConcertRows(t *testing.T) {
 		ReadMoreURL:     "https://concert.ee/a/very/long/url/that/must/not/be/wrapped",
 	})
 
-	if len(rows) != 2 {
-		t.Fatalf("expected 2 rows, got %d", len(rows))
+	if len(rows) < 2 {
+		t.Fatalf("expected the title to wrap onto continuation rows, got %d row(s)", len(rows))
 	}
 	for i, row := range rows {
 		if len(row) != len(headers) {
 			t.Errorf("row %d has %d cells, want %d", i, len(row), len(headers))
 		}
 	}
-	if rows[0][7] != "https://concert.ee/a/very/long/url/that/must/not/be/wrapped" {
-		t.Errorf("URL was altered: %q", rows[0][7])
+	// Displays as "Link", with the full URL carried in the OSC 8 escape.
+	if want := "\x1b]8;;https://concert.ee/a/very/long/url/that/must/not/be/wrapped\x1b\\Link\x1b]8;;\x1b\\"; rows[0][7] != want {
+		t.Errorf("read more cell = %q, want %q", rows[0][7], want)
+	}
+	if got := osc8("", "Link"); got != "" {
+		t.Errorf("empty URL should render nothing, got %q", got)
 	}
 	// Single-line fields must not repeat on continuation rows.
 	if !slices.Equal(rows[1], []string{"", "", "", "", "", rows[1][5], "", ""}) {
