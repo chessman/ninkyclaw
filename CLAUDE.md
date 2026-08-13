@@ -53,6 +53,8 @@ Every site delivers its month differently, and this is where the real work lives
 
 ## Tests
 
-Fixtures live two ways: `testdata/*.html` for `emta`/`concert`/`filharmoonia`, inline HTML string literals in the test file for `muba`/`eccm`/`phillyjoes`. Either is fine; follow whichever the package already uses.
+Fixtures live in `testdata/<source>_{calendar,detail}_fixture.{html,json}` — every package reads them from `filepath.Join("..", "..", "..", "testdata", ...)`. The exception is `muba`, whose test uses an inline HTML string literal.
 
-When a site's markup changes, refresh the fixture from a real fetch — the `scratch_*.html` / `scratch_*.json` files at the repo root are untracked dumps kept for exactly that.
+Fixtures must be committed: `go test ./...` is expected to pass on a fresh clone, so verify with a real clone rather than trusting a local run, which happily reads untracked files.
+
+`scratch/` and `scratch_*` at the repo root are gitignored raw page dumps, kept by hand for refreshing fixtures when a site's markup changes. Nothing in the build may read them.

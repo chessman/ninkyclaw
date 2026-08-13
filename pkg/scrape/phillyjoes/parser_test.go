@@ -10,7 +10,7 @@ import (
 )
 
 func TestParseCalendar(t *testing.T) {
-	fixturePath := filepath.Join("..", "..", "..", "scratch_pj_july_2026.json")
+	fixturePath := filepath.Join("..", "..", "..", "testdata", "phillyjoes_calendar_fixture.json")
 	file, err := os.Open(fixturePath)
 	if err != nil {
 		t.Fatalf("Failed to open calendar fixture: %v", err)
@@ -66,7 +66,7 @@ func TestParseCalendar(t *testing.T) {
 }
 
 func TestParseDetail(t *testing.T) {
-	fixturePath := filepath.Join("..", "..", "..", "scratch_pj_detail.html")
+	fixturePath := filepath.Join("..", "..", "..", "testdata", "phillyjoes_detail_fixture.html")
 	file, err := os.Open(fixturePath)
 	if err != nil {
 		t.Fatalf("Failed to open detail fixture: %v", err)
