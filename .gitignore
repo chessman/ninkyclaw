@@ -1,3 +1,6 @@
 /ninkyclaw
 rules.csv
 
+# Raw page dumps kept around for refreshing testdata/ fixtures by hand.
+/scratch/
+/scratch_*
