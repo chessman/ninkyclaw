@@ -11,7 +11,7 @@ A Go CLI that scrapes concert calendars from six Estonian/Tallinn venue sites, r
 ```bash
 go run ./cmd/ninkyclaw concerts                                    # current month, all sources
 go run ./cmd/ninkyclaw concerts -year 2026 -month 6 -source muba   # one source, one month
-go run ./cmd/ninkyclaw concerts -rules rules.csv                   # apply keyword ratings
+go run ./cmd/ninkyclaw concerts -rules other.csv                   # ratings from a different rules file
 go run ./cmd/ninkyclaw concerts -html out.html                     # HTML page instead of the table
 
 gofmt -l .                                                # must print nothing
@@ -49,7 +49,7 @@ Every site delivers its month differently, and this is where the real work lives
 
 ## Rating
 
-`pkg/rating` matches lowercase keywords from a CSV (`keyword,rating`) against `Description` + `ExtendedDescription`, taking the highest match; unmatched is `Very Low`. `rules.csv` is gitignored (personal taste), so it may be absent — without `-rules` everything gets `Very Low`.
+`pkg/rating` matches lowercase keywords from a CSV (`keyword,rating`) against `Description` + `ExtendedDescription`, taking the highest match; unmatched is `Very Low`. `rules.csv` sits at the repo root and is the default `-rules` value; if the file is missing the run continues and everything gets `Very Low`.
 
 ## Tests
 

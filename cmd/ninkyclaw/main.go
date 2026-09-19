@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -48,7 +49,7 @@ func runConcerts(args []string) {
 	fs := flag.NewFlagSet("concerts", flag.ExitOnError)
 	yearFlag := fs.Int("year", now.Year(), "Year to scrape calendar for")
 	monthFlag := fs.Int("month", int(now.Month()), "Month to scrape calendar for (1-12)")
-	rulesFlag := fs.String("rules", "", "Path to CSV file containing rating rules (keyword,rating)")
+	rulesFlag := fs.String("rules", "rules.csv", "Path to CSV file containing rating rules (keyword,rating)")
 	sourceFlag := fs.String("source", "all", "Scraper source: 'all', 'emta', 'concert', 'filharmoonia', 'muba', 'eccm', or 'phillyjoes'")
 	htmlFlag := fs.String("html", "", "Write the results as an HTML page to this path instead of printing a table")
 
@@ -140,27 +141,29 @@ func runConcerts(args []string) {
 	}
 	log.Printf("Successfully scraped %d concerts.\n", len(concerts))
 
-	if *rulesFlag != "" {
-		log.Printf("Loading rating rules from %s...\n", *rulesFlag)
-		rater, err := rating.NewKeywordRaterFromCSVFile(*rulesFlag)
-		if err != nil {
-			log.Fatalf("Error loading rules file: %v", err)
-		}
+	rater, err := rating.NewKeywordRaterFromCSVFile(*rulesFlag)
+	switch {
+	case errors.Is(err, os.ErrNotExist):
+		log.Printf("No rules file at %s; rating everything Very Low.\n", *rulesFlag)
+	case err != nil:
+		log.Fatalf("Error loading rules file: %v", err)
+	default:
+		log.Printf("Loaded rating rules from %s.\n", *rulesFlag)
+	}
 
-		for i := range concerts {
-			r, matched, err := rater.Rate(concerts[i])
-			if err != nil {
-				log.Printf("Warning: failed to rate concert %q: %v", concerts[i].Title, err)
-				continue
-			}
-			concerts[i].Rating = r.String()
-			concerts[i].MatchedKeywords = matched
+	for i := range concerts {
+		// Unrated concerts still need a rating so they sort consistently.
+		concerts[i].Rating = rating.VeryLow.String()
+		if rater == nil {
+			continue
 		}
-	} else {
-		// If no rules CSV is loaded, set rating to Very Low so they sort consistently
-		for i := range concerts {
-			concerts[i].Rating = rating.VeryLow.String()
+		r, matched, err := rater.Rate(concerts[i])
+		if err != nil {
+			log.Printf("Warning: failed to rate concert %q: %v", concerts[i].Title, err)
+			continue
 		}
+		concerts[i].Rating = r.String()
+		concerts[i].MatchedKeywords = matched
 	}
 
 	// Sort concerts by date ascending (chronological)
