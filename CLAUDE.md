@@ -44,7 +44,7 @@ Every site delivers its month differently, and this is where the real work lives
 | `filharmoonia` | Single full listing; filter by year/month in Go, then fetch each detail page — the listing JSON leaves `description` empty for about a third of them |
 | `eccm`, `concert` | HTML calendar + per-event detail page fetch |
 
-`pkg/client` is the shared HTTP wrapper (15s timeout, `Fetch`/`Post`, non-200 is an error). Use it rather than `net/http` directly.
+`pkg/client` is the shared HTTP wrapper (15s timeout, `Fetch`/`Post`, non-200 is an error, 429 waits out `Retry-After` and tries twice more). Use it rather than `net/http` directly.
 
 `model.Concert.ID`: sites with a native numeric event ID use it (`emta`, `concert`); the rest hash a stable string with `fnv.New32a`. IDs are not globally unique across sources — `Source` disambiguates.
 
