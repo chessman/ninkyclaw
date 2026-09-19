@@ -1,4 +1,5 @@
 /ninkyclaw
+/out.html
 rules.csv
 
 # Raw page dumps kept around for refreshing testdata/ fixtures by hand.

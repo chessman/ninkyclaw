@@ -17,28 +17,22 @@ go mod tidy
 
 To fetch the concert schedule for the current month and output in JSON (default):
 ```bash
-go run ./cmd/ninkyclaw
+go run ./cmd/ninkyclaw concerts
 ```
 
 ### Specifying Dates
 
 You can specify a target year and month using the `-year` and `-month` flags:
 ```bash
-go run ./cmd/ninkyclaw -year 2026 -month 6
+go run ./cmd/ninkyclaw concerts -year 2026 -month 6
 ```
 
-### Output Formats
+### HTML Output
 
-The CLI supports `json`, `csv`, and `table` formatting using the `-format` flag:
-
-**Table Format:**
+By default the results print as a table. With `-html` they are written as a standalone
+HTML page instead, with each title linking to the event:
 ```bash
-go run ./cmd/ninkyclaw -year 2026 -month 6 -format table
-```
-
-**CSV Format:**
-```bash
-go run ./cmd/ninkyclaw -year 2026 -month 6 -format csv
+go run ./cmd/ninkyclaw concerts -year 2026 -month 6 -html concerts.html
 ```
 
 ## Running Tests

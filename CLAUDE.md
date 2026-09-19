@@ -9,9 +9,10 @@ A Go CLI that scrapes concert calendars from six Estonian/Tallinn venue sites, r
 ## Commands
 
 ```bash
-go run ./cmd/ninkyclaw                                    # current month, all sources
-go run ./cmd/ninkyclaw -year 2026 -month 6 -source muba   # one source, one month
-go run ./cmd/ninkyclaw -rules rules.csv                   # apply keyword ratings
+go run ./cmd/ninkyclaw concerts                                    # current month, all sources
+go run ./cmd/ninkyclaw concerts -year 2026 -month 6 -source muba   # one source, one month
+go run ./cmd/ninkyclaw concerts -rules rules.csv                   # apply keyword ratings
+go run ./cmd/ninkyclaw concerts -html out.html                     # HTML page instead of the table
 
 gofmt -l .                                                # must print nothing
 go test ./...                                             # all parser tests (offline)
@@ -20,8 +21,6 @@ go test ./pkg/scrape/emta -run TestParseCalendar -v        # one test
 ```
 
 Sources: `all` (default), `emta`, `concert`, `filharmoonia`, `muba`, `eccm`, `phillyjoes`.
-
-Note: the README documents a `-format json|csv|table` flag that no longer exists — output is always a table.
 
 ## Architecture
 

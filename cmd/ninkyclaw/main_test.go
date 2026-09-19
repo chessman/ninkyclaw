@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -75,5 +77,70 @@ func TestWrap(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestWriteHTML(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "concerts.html")
+	if err := writeHTML(path, []model.Concert{{
+		Title:           "Bach & <script>alert(1)</script>",
+		Date:            time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
+		RawTime:         "19:00",
+		Source:          "concert",
+		Rating:          "High",
+		MatchedKeywords: []string{"bach", "organ"},
+		TicketPrice:     "Paid",
+		ReadMoreURL:     "https://concert.ee/event/1",
+	}}); err != nil {
+		t.Fatalf("writeHTML: %v", err)
+	}
+
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := string(b)
+
+	for _, want := range []string{
+		`<a href="https://concert.ee/event/1">`,
+		"Bach &amp; ",
+		"2026-10-01",
+		"bach, organ",
+		"High",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("page is missing %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "<script>") {
+		t.Errorf("title was not escaped:\n%s", got)
+	}
+}
+
+func TestPastRowsAreMarked(t *testing.T) {
+	now := time.Now()
+	if isPast(now) {
+		t.Error("today should not count as past")
+	}
+	if isPast(now.AddDate(0, 0, 1)) {
+		t.Error("tomorrow should not count as past")
+	}
+	if !isPast(now.AddDate(0, 0, -1)) {
+		t.Error("yesterday should count as past")
+	}
+
+	path := filepath.Join(t.TempDir(), "past.html")
+	if err := writeHTML(path, []model.Concert{
+		{Title: "gone", Date: now.AddDate(0, 0, -1)},
+		{Title: "coming", Date: now.AddDate(0, 0, 1)},
+	}); err != nil {
+		t.Fatalf("writeHTML: %v", err)
+	}
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Count(string(b), `class="past"`); got != 1 {
+		t.Errorf("got %d past rows, want 1:\n%s", got, b)
 	}
 }

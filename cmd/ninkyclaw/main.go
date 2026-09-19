@@ -20,15 +20,39 @@ import (
 	"ninkyclaw/pkg/scrape/phillyjoes"
 )
 
+func usage() {
+	fmt.Fprintf(os.Stderr, "Usage: ninkyclaw <command> [flags]\n\nCommands:\n  concerts  Scrape venue calendars and print a chronological table\n\nRun 'ninkyclaw <command> -h' for the command's flags.\n")
+}
+
 func main() {
+	if len(os.Args) < 2 {
+		usage()
+		os.Exit(2)
+	}
+
+	switch os.Args[1] {
+	case "concerts":
+		runConcerts(os.Args[2:])
+	case "-h", "--help", "help":
+		usage()
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown command: %s\n\n", os.Args[1])
+		usage()
+		os.Exit(2)
+	}
+}
+
+func runConcerts(args []string) {
 	now := time.Now()
 
-	yearFlag := flag.Int("year", now.Year(), "Year to scrape calendar for")
-	monthFlag := flag.Int("month", int(now.Month()), "Month to scrape calendar for (1-12)")
-	rulesFlag := flag.String("rules", "", "Path to CSV file containing rating rules (keyword,rating)")
-	sourceFlag := flag.String("source", "all", "Scraper source: 'all', 'emta', 'concert', 'filharmoonia', 'muba', 'eccm', or 'phillyjoes'")
+	fs := flag.NewFlagSet("concerts", flag.ExitOnError)
+	yearFlag := fs.Int("year", now.Year(), "Year to scrape calendar for")
+	monthFlag := fs.Int("month", int(now.Month()), "Month to scrape calendar for (1-12)")
+	rulesFlag := fs.String("rules", "", "Path to CSV file containing rating rules (keyword,rating)")
+	sourceFlag := fs.String("source", "all", "Scraper source: 'all', 'emta', 'concert', 'filharmoonia', 'muba', 'eccm', or 'phillyjoes'")
+	htmlFlag := fs.String("html", "", "Write the results as an HTML page to this path instead of printing a table")
 
-	flag.Parse()
+	fs.Parse(args)
 
 	if *monthFlag < 1 || *monthFlag > 12 {
 		log.Fatalf("Invalid month: %d. Must be between 1 and 12.", *monthFlag)
@@ -149,6 +173,14 @@ func main() {
 		}
 		return rating.Priority(concerts[i].Rating) > rating.Priority(concerts[j].Rating)
 	})
+
+	if *htmlFlag != "" {
+		if err := writeHTML(*htmlFlag, concerts); err != nil {
+			log.Fatalf("Error writing HTML: %v", err)
+		}
+		log.Printf("Wrote %s\n", *htmlFlag)
+		return
+	}
 
 	outputTable(concerts)
 }
