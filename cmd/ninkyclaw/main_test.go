@@ -104,7 +104,7 @@ func TestWriteHTML(t *testing.T) {
 	for _, want := range []string{
 		`<a href="https://concert.ee/event/1">`,
 		"Bach &amp; ",
-		"2026-10-01",
+		"Oct 1",
 		"bach, organ",
 		"High",
 	} {

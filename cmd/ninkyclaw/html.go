@@ -14,7 +14,8 @@ import (
 )
 
 // htmlTmpl renders the same columns as the terminal table, with the title
-// carrying the read-more link instead of a separate column.
+// carrying the read-more link instead of a separate column and the date cell
+// leading with an add-to-calendar link.
 var htmlTmpl = template.Must(template.New("concerts").Funcs(template.FuncMap{
 	"join": strings.Join,
 	"past": isPast,
@@ -34,16 +35,15 @@ tr.past a { color: #777; }
 td:nth-child(-n+2) { white-space: nowrap; }
 </style>
 <table>
-<tr><th>Date<th>Time<th>Source<th>Rating<th>Keywords<th>Title<th>Ticket<th>Add
+<tr><th>Date<th>Time<th>Source<th>Rating<th>Keywords<th>Title<th>Ticket
 {{range .}}<tr{{if past .Date}} class="past"{{end}}>
-<td>{{.Date.Format "2006-01-02"}}
+<td><a href="{{gcal .}}" target="_blank" rel="noopener" title="Add to Google Calendar">&#128197;</a> {{.Date.Format "Jan 2"}}
 <td>{{.RawTime}}
 <td>{{.Source}}
 <td>{{.Rating}}
 <td>{{join .MatchedKeywords ", "}}
 <td>{{if .ReadMoreURL}}<a href="{{.ReadMoreURL}}">{{.Title}}</a>{{else}}{{.Title}}{{end}}
 <td>{{.TicketPrice}}
-<td><a href="{{gcal .}}" target="_blank" rel="noopener" title="Add to Google Calendar">&#128197;</a>
 {{end}}</table>
 `))
 
