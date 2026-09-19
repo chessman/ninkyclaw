@@ -41,7 +41,7 @@ Every site delivers its month differently, and this is where the real work lives
 | `emta` | Page ignores URL params; POST to the WordPress `admin-ajax.php` endpoint the site's JS calls |
 | `phillyjoes` | Squarespace JSON API (`GetItemsByMonth`), epoch-ms dates |
 | `muba` | `?date_from=&date_to=` query + follow `nextURL` pagination in a loop |
-| `filharmoonia` | Single full listing; filter by year/month in Go |
+| `filharmoonia` | Single full listing; filter by year/month in Go, then fetch each detail page — the listing JSON leaves `description` empty for about a third of them |
 | `eccm`, `concert` | HTML calendar + per-event detail page fetch |
 
 `pkg/client` is the shared HTTP wrapper (15s timeout, `Fetch`/`Post`, non-200 is an error). Use it rather than `net/http` directly.

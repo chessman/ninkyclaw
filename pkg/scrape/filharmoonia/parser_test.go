@@ -4,6 +4,7 @@ import (
 	"hash/fnv"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -73,5 +74,28 @@ func TestParseCalendar(t *testing.T) {
 	expectedSource := "filharmoonia"
 	if concert.Source != expectedSource {
 		t.Errorf("Expected Source %q, got %q", expectedSource, concert.Source)
+	}
+}
+
+// The real detail page is a megabyte of Wix chrome, so the fixture here is the
+// shape that matters: hashed class names inside the about-section data-hook,
+// whose own about heading must stay out of the result.
+func TestParseDetail(t *testing.T) {
+	const page = `<html><body>
+<div data-hook="event-title">6 Bachi motetti II</div>
+<div data-hook="about-section">
+  <h2 data-hook="about">Lisainfo</h2>
+  <p class="vVP7K aoX-4"><span>Johann Sebastian</span> <span>Bach</span></p>
+  <div class="vVP7K"><span><br/></span></div>
+  <p class="K3gHo gR5w2"><span>MOTETID BWV 225</span></p>
+</div>
+</body></html>`
+
+	about, err := ParseDetail(strings.NewReader(page))
+	if err != nil {
+		t.Fatalf("ParseDetail: %v", err)
+	}
+	if want := "Johann Sebastian Bach\nMOTETID BWV 225"; about != want {
+		t.Errorf("ParseDetail = %q, want %q", about, want)
 	}
 }

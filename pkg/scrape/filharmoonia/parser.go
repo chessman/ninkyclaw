@@ -116,7 +116,46 @@ func (s *Scraper) Scrape(year, month int) ([]model.Concert, error) {
 		}
 	}
 
+	// The listing leaves description empty for a good share of the events, so the
+	// programme and performers only exist on the detail page. Enrich after
+	// filtering — no point fetching months nobody asked for.
+	for i := range filtered {
+		if filtered[i].ReadMoreURL == "" {
+			continue
+		}
+		detailBody, err := s.client.Fetch(filtered[i].ReadMoreURL)
+		if err != nil {
+			continue
+		}
+		about, err := ParseDetail(detailBody)
+		detailBody.Close()
+		if err == nil {
+			filtered[i].ExtendedDescription = about
+		}
+	}
+
 	return filtered, nil
+}
+
+// ParseDetail pulls the programme and performers out of an event page. Wix
+// hashes its CSS class names on every deploy, so the stable anchor is the
+// about-section data-hook; the about hook inside it is only the heading.
+// Paragraphs are joined with newlines, because the section's own Text() would
+// run the last word of one line into the first of the next.
+func ParseDetail(r io.Reader) (string, error) {
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return "", err
+	}
+
+	var paragraphs []string
+	doc.Find(`[data-hook="about-section"] p`).Each(func(_ int, s *goquery.Selection) {
+		if text := strings.Join(strings.Fields(s.Text()), " "); text != "" {
+			paragraphs = append(paragraphs, text)
+		}
+	})
+
+	return strings.Join(paragraphs, "\n"), nil
 }
 
 // Parse extracts concerts from the filharmoonia HTML page.
