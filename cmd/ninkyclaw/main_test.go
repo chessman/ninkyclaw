@@ -144,3 +144,23 @@ func TestPastRowsAreMarked(t *testing.T) {
 		t.Errorf("got %d past rows, want 1:\n%s", got, b)
 	}
 }
+
+func TestEventDates(t *testing.T) {
+	day := time.Date(2026, 10, 5, 0, 0, 0, 0, time.UTC)
+
+	for _, tt := range []struct {
+		rawTime string
+		want    string
+	}{
+		{"19:00", "20261005T190000/20261005T210000"},
+		{"19:00 - 22:00", "20261005T190000/20261005T220000"},
+		{"18:00 – 19:30", "20261005T180000/20261005T193000"},
+		{"15:51 - 25.10.2026 23:51", "20261005T155100/20261005T235100"},
+		{"", "20261005/20261006"},
+		{"kell", "20261005/20261006"},
+	} {
+		if got := eventDates(model.Concert{Date: day, RawTime: tt.rawTime}); got != tt.want {
+			t.Errorf("eventDates(%q) = %q, want %q", tt.rawTime, got, tt.want)
+		}
+	}
+}
