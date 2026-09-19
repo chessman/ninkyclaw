@@ -33,6 +33,9 @@ tr:nth-child(even) { background: #f3f3f3; }
 tr.past { background: #e0e0e0; color: #777; }
 tr.past a { color: #777; }
 td:nth-child(-n+2) { white-space: nowrap; }
+/* Some sites write a sentence where a price belongs; wrap it instead of
+   stretching the table. */
+td:last-child { max-width: 20ch; }
 </style>
 <table>
 <tr><th>Date<th>Time<th>Source<th>Rating<th>Keywords<th>Title<th>Ticket

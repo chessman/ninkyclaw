@@ -58,6 +58,9 @@ type WixEventTicketing struct {
 	SoldOut bool `json:"soldOut"`
 }
 
+// Wix registration types; only TICKETS means the tickets are actually sold here.
+const wixRegistrationTickets = 2
+
 // WixEventRegistration holds registration data.
 type WixEventRegistration struct {
 	Type      int               `json:"type"`
@@ -176,9 +179,11 @@ func (s *Scraper) Parse(r io.Reader) ([]model.Concert, error) {
 			readMoreURL = detailURL + event.Slug
 		}
 
-		// Ticket pricing status
+		// Ticket pricing status. Wix reports soldOut for every event that sells no
+		// tickets through Wix at all, which is all of them here — the Philharmonic
+		// sells elsewhere — so the flag only means anything for TICKETS events.
 		ticketPrice := "Paid"
-		if event.Registration.Ticketing.SoldOut {
+		if event.Registration.Type == wixRegistrationTickets && event.Registration.Ticketing.SoldOut {
 			ticketPrice = "Sold Out"
 		}
 
