@@ -28,7 +28,7 @@ func TestKeywordRater(t *testing.T) {
 				Description:         "An ambient electronic music performance.",
 				ExtendedDescription: "Featuring synthesisers.",
 			},
-			expectedRating:   VeryLow,
+			expectedRating:   Low,
 			expectedKeywords: nil,
 		},
 		{

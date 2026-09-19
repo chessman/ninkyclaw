@@ -13,7 +13,6 @@ import (
 type Rating string
 
 const (
-	VeryLow  Rating = "Very Low"
 	Low      Rating = "Low"
 	Medium   Rating = "Medium"
 	High     Rating = "High"
@@ -25,13 +24,9 @@ func (r Rating) String() string {
 	return string(r)
 }
 
-// parseRating converts a string into a Rating, returning VeryLow if unrecognized.
+// parseRating converts a string into a Rating, returning Low if unrecognized.
 func parseRating(s string) Rating {
 	switch strings.ToLower(strings.TrimSpace(s)) {
-	case "very low", "verylow":
-		return VeryLow
-	case "low":
-		return Low
 	case "medium":
 		return Medium
 	case "high":
@@ -39,7 +34,7 @@ func parseRating(s string) Rating {
 	case "very high", "veryhigh":
 		return VeryHigh
 	default:
-		return VeryLow
+		return Low
 	}
 }
 
@@ -51,14 +46,13 @@ type Rater interface {
 
 // priorityMap maps rating enum to numeric priority for comparison.
 var priorityMap = map[Rating]int{
-	VeryLow:  1,
-	Low:      2,
-	Medium:   3,
-	High:     4,
-	VeryHigh: 5,
+	Low:      1,
+	Medium:   2,
+	High:     3,
+	VeryHigh: 4,
 }
 
-// Priority returns the integer priority of a rating string. Unrecognized defaults to 1 (Very Low).
+// Priority returns the integer priority of a rating string. Unrecognized defaults to 1 (Low).
 func Priority(s string) int {
 	return priorityMap[parseRating(s)]
 }
@@ -106,14 +100,14 @@ func NewKeywordRaterFromCSVFile(filePath string) (*KeywordRater, error) {
 }
 
 // Rate evaluates the concert's description and extended description for keywords.
-// Returns the highest rating matched (VeryLow if none) and every keyword that
+// Returns the highest rating matched (Low if none) and every keyword that
 // matched, sorted so output is stable across runs.
 func (kr *KeywordRater) Rate(c model.Concert) (Rating, []string, error) {
 	descLower := strings.ToLower(c.Description)
 	extDescLower := strings.ToLower(c.ExtendedDescription)
 
-	highestRating := VeryLow
-	highestPriority := priorityMap[VeryLow]
+	highestRating := Low
+	highestPriority := priorityMap[Low]
 	var matched []string
 
 	for kw, rate := range kr.keywords {

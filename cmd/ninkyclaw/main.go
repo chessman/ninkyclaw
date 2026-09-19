@@ -107,7 +107,7 @@ func runConcerts(args []string) {
 	rater, err := rating.NewKeywordRaterFromCSVFile(*rulesFlag)
 	switch {
 	case errors.Is(err, os.ErrNotExist):
-		log.Printf("No rules file at %s; rating everything Very Low.\n", *rulesFlag)
+		log.Printf("No rules file at %s; rating everything Low.\n", *rulesFlag)
 	case err != nil:
 		log.Fatalf("Error loading rules file: %v", err)
 	default:
@@ -116,7 +116,7 @@ func runConcerts(args []string) {
 
 	for i := range concerts {
 		// Unrated concerts still need a rating so they sort consistently.
-		concerts[i].Rating = rating.VeryLow.String()
+		concerts[i].Rating = rating.Low.String()
 		if rater == nil {
 			continue
 		}
