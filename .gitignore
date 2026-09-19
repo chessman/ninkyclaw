@@ -1,5 +1,6 @@
 /ninkyclaw
 /out.html
+/site/
 
 # Raw page dumps kept around for refreshing testdata/ fixtures by hand.
 /scratch/

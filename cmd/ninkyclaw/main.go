@@ -13,6 +13,7 @@ import (
 
 	"ninkyclaw/pkg/model"
 	"ninkyclaw/pkg/rating"
+	"ninkyclaw/pkg/scrape"
 	"ninkyclaw/pkg/scrape/concert"
 	"ninkyclaw/pkg/scrape/eccm"
 	"ninkyclaw/pkg/scrape/emta"
@@ -49,6 +50,7 @@ func runConcerts(args []string) {
 	fs := flag.NewFlagSet("concerts", flag.ExitOnError)
 	yearFlag := fs.Int("year", now.Year(), "Year to scrape calendar for")
 	monthFlag := fs.Int("month", int(now.Month()), "Month to scrape calendar for (1-12)")
+	monthsFlag := fs.Int("months", 1, "How many consecutive months to scrape, starting at -month")
 	rulesFlag := fs.String("rules", "rules.csv", "Path to CSV file containing rating rules (keyword,rating)")
 	sourceFlag := fs.String("source", "all", "Scraper source: 'all', 'emta', 'concert', 'filharmoonia', 'muba', 'eccm', or 'phillyjoes'")
 	htmlFlag := fs.String("html", "", "Write the results as an HTML page to this path instead of printing a table")
@@ -58,85 +60,46 @@ func runConcerts(args []string) {
 	if *monthFlag < 1 || *monthFlag > 12 {
 		log.Fatalf("Invalid month: %d. Must be between 1 and 12.", *monthFlag)
 	}
+	if *monthsFlag < 1 {
+		log.Fatalf("Invalid months: %d. Must be at least 1.", *monthsFlag)
+	}
 
-	var concerts []model.Concert
+	scrapers := []struct {
+		name string
+		s    scrape.Scraper
+	}{
+		{"emta", emta.NewScraper()},
+		{"concert", concert.NewScraper()},
+		{"filharmoonia", filharmoonia.NewScraper()},
+		{"muba", muba.NewScraper()},
+		{"eccm", eccm.NewScraper()},
+		{"phillyjoes", phillyjoes.NewScraper()},
+	}
 
-	log.Printf("Scraping %s calendar for %d/%02d...\n", *sourceFlag, *yearFlag, *monthFlag)
-
-	runEMTA := *sourceFlag == "all" || *sourceFlag == "emta"
-	runConcert := *sourceFlag == "all" || *sourceFlag == "concert"
-	runFilharmoonia := *sourceFlag == "all" || *sourceFlag == "filharmoonia"
-	runMUBA := *sourceFlag == "all" || *sourceFlag == "muba"
-	runECCM := *sourceFlag == "all" || *sourceFlag == "eccm"
-	runPhillyJoes := *sourceFlag == "all" || *sourceFlag == "phillyjoes"
-
-	if *sourceFlag != "all" && *sourceFlag != "emta" && *sourceFlag != "concert" && *sourceFlag != "filharmoonia" && *sourceFlag != "muba" && *sourceFlag != "eccm" && *sourceFlag != "phillyjoes" {
+	valid := *sourceFlag == "all"
+	for _, sc := range scrapers {
+		valid = valid || sc.name == *sourceFlag
+	}
+	if !valid {
 		log.Fatalf("Unknown source: %s. Supported sources: all, emta, concert, filharmoonia, muba, eccm, phillyjoes.", *sourceFlag)
 	}
 
-	if runEMTA {
-		log.Println("Scraping EMTA...")
-		scraper := emta.NewScraper()
-		emtaConcerts, err := scraper.Scrape(*yearFlag, *monthFlag)
-		if err != nil {
-			log.Printf("Error scraping EMTA: %v", err)
-		} else {
-			concerts = append(concerts, emtaConcerts...)
-		}
-	}
+	var concerts []model.Concert
 
-	if runConcert {
-		log.Println("Scraping concert.ee...")
-		scraper := concert.NewScraper()
-		concertConcerts, err := scraper.Scrape(*yearFlag, *monthFlag)
-		if err != nil {
-			log.Printf("Error scraping concert.ee: %v", err)
-		} else {
-			concerts = append(concerts, concertConcerts...)
-		}
-	}
-
-	if runFilharmoonia {
-		log.Println("Scraping filharmoonia.ee...")
-		scraper := filharmoonia.NewScraper()
-		filharmooniaConcerts, err := scraper.Scrape(*yearFlag, *monthFlag)
-		if err != nil {
-			log.Printf("Error scraping filharmoonia.ee: %v", err)
-		} else {
-			concerts = append(concerts, filharmooniaConcerts...)
-		}
-	}
-
-	if runMUBA {
-		log.Println("Scraping muba.edu.ee...")
-		scraper := muba.NewScraper()
-		mubaConcerts, err := scraper.Scrape(*yearFlag, *monthFlag)
-		if err != nil {
-			log.Printf("Error scraping muba.edu.ee: %v", err)
-		} else {
-			concerts = append(concerts, mubaConcerts...)
-		}
-	}
-
-	if runECCM {
-		log.Println("Scraping eccm.ee...")
-		scraper := eccm.NewScraper()
-		eccmConcerts, err := scraper.Scrape(*yearFlag, *monthFlag)
-		if err != nil {
-			log.Printf("Error scraping eccm.ee: %v", err)
-		} else {
-			concerts = append(concerts, eccmConcerts...)
-		}
-	}
-
-	if runPhillyJoes {
-		log.Println("Scraping phillyjoes.com...")
-		scraper := phillyjoes.NewScraper()
-		pjConcerts, err := scraper.Scrape(*yearFlag, *monthFlag)
-		if err != nil {
-			log.Printf("Error scraping phillyjoes.com: %v", err)
-		} else {
-			concerts = append(concerts, pjConcerts...)
+	for m := 0; m < *monthsFlag; m++ {
+		// time.Date normalizes an overflowing month, so month 13 becomes next January.
+		month := time.Date(*yearFlag, time.Month(*monthFlag+m), 1, 0, 0, 0, 0, time.UTC)
+		for _, sc := range scrapers {
+			if *sourceFlag != "all" && *sourceFlag != sc.name {
+				continue
+			}
+			log.Printf("Scraping %s for %d/%02d...\n", sc.name, month.Year(), int(month.Month()))
+			got, err := sc.s.Scrape(month.Year(), int(month.Month()))
+			if err != nil {
+				log.Printf("Error scraping %s: %v", sc.name, err)
+				continue
+			}
+			concerts = append(concerts, got...)
 		}
 	}
 	log.Printf("Successfully scraped %d concerts.\n", len(concerts))

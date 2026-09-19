@@ -1,0 +1,39 @@
+name: Publish concerts
+
+on:
+  schedule:
+    - cron: "0 5 * * *" # 08:00 in Tallinn
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two runs deploy Pages at once.
+concurrency:
+  group: pages
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Scrape this month and the next
+        run: |
+          mkdir -p site
+          go run ./cmd/ninkyclaw concerts -months 2 -html site/index.html
+          # A scraper failure is only logged, so bail out rather than publish an
+          # empty page over a good one.
+          grep -q '<td>' site/index.html
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v5
