@@ -29,32 +29,32 @@ func TestParseCalendar(t *testing.T) {
 
 	// Verify the first event
 	first := concerts[0]
-	if !strings.Contains(first.Title, "Karl Martin Kirm") {
-		t.Errorf("Expected Title to contain 'Karl Martin Kirm', got %q", first.Title)
+	if !strings.Contains(first.Title, "Latin Jam Session") {
+		t.Errorf("Expected Title to contain 'Latin Jam Session', got %q", first.Title)
 	}
 
 	// API returns events in reverse chronological order;
-	// first event is Karl Martin Kirm on 2026-07-31 at 21:00 Tallinn (18:00 UTC)
-	expectedDate := time.Date(2026, 7, 31, 0, 0, 0, 0, time.UTC)
+	// first event is the Latin Jam Session on 2026-09-29 at 20:00 Tallinn (17:00 UTC)
+	expectedDate := time.Date(2026, 9, 29, 0, 0, 0, 0, time.UTC)
 	if !first.Date.Equal(expectedDate) {
 		t.Errorf("Expected Date %v, got %v", expectedDate, first.Date)
 	}
 
-	if first.RawTime != "21:00" {
-		t.Errorf("Expected RawTime '21:00', got %q", first.RawTime)
+	if first.RawTime != "20:00" {
+		t.Errorf("Expected RawTime '20:00', got %q", first.RawTime)
 	}
 
 	if first.Venue != "Philly Joe's jazz club" {
 		t.Errorf("Expected Venue 'Philly Joe's jazz club', got %q", first.Venue)
 	}
 
-	expectedReadMoreURL := "https://www.phillyjoes.com/programme/resident-karl-martin-kirm-exactitudes-vol-2"
+	expectedReadMoreURL := "https://www.phillyjoes.com/programme/latin-jam-session-29-09-26"
 	if first.ReadMoreURL != expectedReadMoreURL {
 		t.Errorf("Expected ReadMoreURL %q, got %q", expectedReadMoreURL, first.ReadMoreURL)
 	}
 
 	h := fnv.New32a()
-	h.Write([]byte("6a452d8289bc560170d4d9f8"))
+	h.Write([]byte(expectedReadMoreURL))
 	expectedID := int(h.Sum32())
 	if first.ID != expectedID {
 		t.Errorf("Expected ID %d, got %d", expectedID, first.ID)

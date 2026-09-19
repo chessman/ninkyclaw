@@ -99,6 +99,12 @@ func runConcerts(args []string) {
 				log.Printf("Error scraping %s: %v", sc.name, err)
 				continue
 			}
+			if len(got) == 0 {
+				// A source that quietly returns nothing usually means the site changed
+				// shape, which is otherwise invisible until someone notices a whole
+				// venue missing from the page.
+				log.Printf("Warning: %s returned no events for %d/%02d", sc.name, month.Year(), int(month.Month()))
+			}
 			concerts = append(concerts, got...)
 		}
 	}

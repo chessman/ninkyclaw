@@ -39,7 +39,7 @@ Every site delivers its month differently, and this is where the real work lives
 | Source | Mechanism |
 |---|---|
 | `emta` | Page ignores URL params; POST to the WordPress `admin-ajax.php` endpoint the site's JS calls |
-| `phillyjoes` | Squarespace JSON API (`GetItemsByMonth`), epoch-ms dates |
+| `phillyjoes` | Squarespace JSON API (`GetItemsByMonth`), epoch-ms dates under `structuredContent`; the item carries no event id, so the URL is hashed |
 | `muba` | `?date_from=&date_to=` query + follow `nextURL` pagination in a loop |
 | `filharmoonia` | Single full listing; filter by year/month in Go, then fetch each detail page — the listing JSON leaves `description` empty for about a third of them |
 | `eccm`, `concert` | HTML calendar + per-event detail page fetch |

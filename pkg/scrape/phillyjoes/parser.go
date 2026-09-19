@@ -51,14 +51,19 @@ type PhillyJoesLocation struct {
 	AddressTitle string `json:"addressTitle"`
 }
 
+// PhillyJoesStructuredContent holds the dates. Squarespace used to put these at
+// the top level of the item; they live in structuredContent now.
+type PhillyJoesStructuredContent struct {
+	StartDate int64 `json:"startDate"` // Epoch milliseconds
+	EndDate   int64 `json:"endDate"`   // Epoch milliseconds
+}
+
 type PhillyJoesEvent struct {
-	ID        string             `json:"id"`
-	Title     string             `json:"title"`
-	FullURL   string             `json:"fullUrl"`
-	AssetURL  string             `json:"assetUrl"`
-	StartDate int64              `json:"startDate"` // Epoch milliseconds
-	EndDate   int64              `json:"endDate"`   // Epoch milliseconds
-	Location  PhillyJoesLocation `json:"location"`
+	Title             string                      `json:"title"`
+	FullURL           string                      `json:"fullUrl"`
+	AssetURL          string                      `json:"assetUrl"`
+	StructuredContent PhillyJoesStructuredContent `json:"structuredContent"`
+	Location          PhillyJoesLocation          `json:"location"`
 }
 
 // Scrape fetches events for the given year/month.
@@ -135,12 +140,7 @@ func (s *Scraper) Parse(r io.Reader) ([]model.Concert, error) {
 
 	var concerts []model.Concert
 	for _, event := range events {
-		date := time.UnixMilli(event.StartDate).In(loc)
-
-		// Create deterministic ID
-		h := fnv.New32a()
-		h.Write([]byte(event.ID))
-		concertID := int(h.Sum32())
+		date := time.UnixMilli(event.StructuredContent.StartDate).In(loc)
 
 		// Read More URL
 		readMoreURL := ""
@@ -151,6 +151,13 @@ func (s *Scraper) Parse(r io.Reader) ([]model.Concert, error) {
 				readMoreURL = event.FullURL
 			}
 		}
+
+		// Create deterministic ID. The item carries no event id any more, and its
+		// systemDataId is the image's, shared by every event that reuses a poster,
+		// so the event page URL is the one unique stable string left.
+		h := fnv.New32a()
+		h.Write([]byte(readMoreURL))
+		concertID := int(h.Sum32())
 
 		// Venue
 		venue := event.Location.AddressTitle
