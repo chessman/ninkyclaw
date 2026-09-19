@@ -13,6 +13,7 @@ func TestKeywordRater(t *testing.T) {
 		"classical": High,
 		"rock":      VeryHigh,
 		"pop":       Low,
+		"bach":      High,
 	}
 	rater := NewKeywordRater(rules)
 
@@ -30,6 +31,15 @@ func TestKeywordRater(t *testing.T) {
 			},
 			expectedRating:   Low,
 			expectedKeywords: nil,
+		},
+		{
+			name: "Keyword only in the title",
+			concert: model.Concert{
+				Title:       "6 Bachi motetti II - FLORIDANTE",
+				Description: "",
+			},
+			expectedRating:   High,
+			expectedKeywords: []string{"bach"},
 		},
 		{
 			name: "Single low priority match",

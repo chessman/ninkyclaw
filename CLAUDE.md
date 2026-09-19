@@ -50,7 +50,7 @@ Every site delivers its month differently, and this is where the real work lives
 
 ## Rating
 
-`pkg/rating` matches lowercase keywords from a CSV (`keyword,rating`) against `Description` + `ExtendedDescription`, taking the highest match; unmatched is `Low`, the lowest rating. `rules.csv` sits at the repo root and is the default `-rules` value; if the file is missing the run continues and everything gets `Low`.
+`pkg/rating` matches lowercase keywords from a CSV (`keyword,rating`) against `Title` + `Description` + `ExtendedDescription` (several sources ship an empty description, so the title carries the composer), taking the highest match; unmatched is `Low`, the lowest rating. `rules.csv` sits at the repo root and is the default `-rules` value; if the file is missing the run continues and everything gets `Low`.
 
 ## Tests
 

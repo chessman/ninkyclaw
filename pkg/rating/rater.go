@@ -99,12 +99,13 @@ func NewKeywordRaterFromCSVFile(filePath string) (*KeywordRater, error) {
 	return NewKeywordRater(rules), nil
 }
 
-// Rate evaluates the concert's description and extended description for keywords.
+// Rate evaluates the concert's title, description and extended description for
+// keywords. The title matters as much as the rest: several sources publish an
+// empty description, leaving the composer's name in the title alone.
 // Returns the highest rating matched (Low if none) and every keyword that
 // matched, sorted so output is stable across runs.
 func (kr *KeywordRater) Rate(c model.Concert) (Rating, []string, error) {
-	descLower := strings.ToLower(c.Description)
-	extDescLower := strings.ToLower(c.ExtendedDescription)
+	haystack := strings.ToLower(c.Title + "\n" + c.Description + "\n" + c.ExtendedDescription)
 
 	highestRating := Low
 	highestPriority := priorityMap[Low]
@@ -112,7 +113,7 @@ func (kr *KeywordRater) Rate(c model.Concert) (Rating, []string, error) {
 
 	for kw, rate := range kr.keywords {
 		kwLower := strings.ToLower(kw)
-		if strings.Contains(descLower, kwLower) || strings.Contains(extDescLower, kwLower) {
+		if strings.Contains(haystack, kwLower) {
 			matched = append(matched, kw)
 			prio := priorityMap[rate]
 			if prio > highestPriority {

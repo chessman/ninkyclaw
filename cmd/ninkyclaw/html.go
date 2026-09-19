@@ -23,6 +23,7 @@ var htmlTmpl = template.Must(template.New("concerts").Funcs(template.FuncMap{
 }).Parse(`<!DOCTYPE html>
 <html lang="en">
 <meta charset="utf-8">
+<meta name="robots" content="noindex">
 <title>Concerts</title>
 <style>
 body { font: 14px/1.4 system-ui, sans-serif; margin: 2rem; }
