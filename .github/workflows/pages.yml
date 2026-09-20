@@ -4,7 +4,7 @@ on:
   schedule:
     # Off the hour on purpose: GitHub queues everyone's :00 crons together,
     # and the overflow gets delayed or dropped.
-    - cron: "23 5 * * *" # 08:23 in Tallinn
+    - cron: "23 2 * * *" # 05:23 in Tallinn, 04:23 once winter time starts
   workflow_dispatch:
 
 permissions:
