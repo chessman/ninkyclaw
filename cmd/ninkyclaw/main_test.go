@@ -102,7 +102,7 @@ func TestWriteHTML(t *testing.T) {
 	got := string(b)
 
 	for _, want := range []string{
-		`<a href="https://concert.ee/event/1">`,
+		`<a href="https://concert.ee/event/1" target="_blank" rel="noopener">`,
 		"Bach &amp; ",
 		"Oct 1",
 		"bach, organ",

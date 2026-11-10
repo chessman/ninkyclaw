@@ -46,7 +46,7 @@ td:last-child { max-width: 20ch; }
 <td>{{.Source}}
 <td>{{.Rating}}
 <td>{{join .MatchedKeywords ", "}}
-<td>{{if .ReadMoreURL}}<a href="{{.ReadMoreURL}}">{{.Title}}</a>{{else}}{{.Title}}{{end}}
+<td>{{if .ReadMoreURL}}<a href="{{.ReadMoreURL}}" target="_blank" rel="noopener">{{.Title}}</a>{{else}}{{.Title}}{{end}}
 <td>{{.TicketPrice}}
 {{end}}</table>
 `))
